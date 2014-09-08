@@ -8,7 +8,8 @@ import (
 )
 
 type FileInfo struct {
-	name string
+	name  string
+	isDir bool
 	rs.Entry
 }
 
@@ -29,7 +30,7 @@ func (f *FileInfo) ModTime() time.Time {
 }
 
 func (f *FileInfo) IsDir() bool {
-	return false
+	return f.isDir
 }
 
 func (f *FileInfo) Sys() interface{} {

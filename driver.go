@@ -27,17 +27,23 @@ func (driver *QiniuDriver) ChangeDir(path string) error {
 }
 
 func (driver *QiniuDriver) Stat(key string) (server.FileInfo, error) {
+	if key == "/" {
+		return &FileInfo{key, true, rs.Entry{}}, nil
+	}
 	entry, err := driver.client.Stat(nil, driver.bucket, key)
 	if err != nil {
 		return nil, err
 	}
 
-	return &FileInfo{key, entry}, nil
+	return &FileInfo{key, false, entry}, nil
 }
 
 func (driver *QiniuDriver) DirContents(prefix string) ([]server.FileInfo, error) {
-	fmt.Print("bucket:", driver.bucket, "prefix:", strings.TrimLeft(prefix, "/"))
-	entries, _, err := driver.client2.ListPrefix(nil, driver.bucket, strings.TrimLeft(prefix, "/"), "", 1000)
+	d := strings.TrimLeft(prefix, "/")
+	entries, _, err := driver.client2.ListPrefix(nil, driver.bucket, d, "", 1000)
+	if err == io.EOF {
+		err = nil
+	}
 	if err != nil {
 		return nil, err
 	}
