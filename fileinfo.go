@@ -22,6 +22,9 @@ func (f *FileInfo) Size() int64 {
 }
 
 func (f *FileInfo) Mode() os.FileMode {
+	if f.isDir {
+		return os.ModeDir | os.ModePerm
+	}
 	return os.ModePerm
 }
 
