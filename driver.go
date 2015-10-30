@@ -175,7 +175,7 @@ func (driver *QiniuDriver) MakeDir(path string) error {
 	return err
 }
 
-func (driver *QiniuDriver) GetFile(key string, start int64) (int64, io.ReadCloser, error) {
+func (driver *QiniuDriver) GetFile(key string, offset int64) (int64, io.ReadCloser, error) {
 	stat, err := driver.Stat(key)
 	if err != nil {
 		return 0, nil, err
@@ -193,7 +193,7 @@ func (driver *QiniuDriver) GetFile(key string, start int64) (int64, io.ReadClose
 		return 0, nil, err
 	}
 
-	return stat.Size(), resp.Body, nil
+	return stat.Size(), NewSkipReadCloser(resp.Body, offset), nil
 }
 
 func (driver *QiniuDriver) PutFile(key string, data io.Reader, appendData bool) (int64, error) {
