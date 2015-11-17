@@ -27,7 +27,7 @@ func (driver *QiniuDriver) ChangeDir(path string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("changedir:", f)
+
 	if !f.IsDir() {
 		return errors.New("not a dir")
 	}
@@ -51,7 +51,7 @@ func (driver *QiniuDriver) Stat(key string) (server.FileInfo, error) {
 	return &FileInfo{key, false, entry}, nil
 }
 
-func (driver *QiniuDriver) DirContents(prefix string) ([]server.FileInfo, error) {
+func (driver *QiniuDriver) ListDir(prefix string, callback func(server.FileInfo) error) error {
 	d := strings.TrimLeft(prefix, "/")
 	if d != "" {
 		d = d + "/"
@@ -61,12 +61,11 @@ func (driver *QiniuDriver) DirContents(prefix string) ([]server.FileInfo, error)
 		err = nil
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	dirCache := make(map[string]bool)
 
-	files := make([]server.FileInfo, 0, len(entries))
 	for _, entry := range entries {
 		if prefix != "/" && prefix != "" && !strings.HasPrefix(entry.Key, d) {
 			continue
@@ -75,18 +74,16 @@ func (driver *QiniuDriver) DirContents(prefix string) ([]server.FileInfo, error)
 		if key == "" {
 			continue
 		}
+		var f server.FileInfo
 		if strings.Contains(key, "/") {
 			key := strings.Trim(strings.Split(key, "/")[0], "/")
 			if _, ok := dirCache[key]; ok {
 				continue
 			}
-			files = append(files, &FileInfo{
-				name:  key,
-				isDir: true,
-			})
 			dirCache[key] = true
+			f = &FileInfo{name: key, isDir: true}
 		} else {
-			files = append(files, &FileInfo{
+			f = &FileInfo{
 				name: key,
 				Entry: rs.Entry{
 					Hash:     entry.Hash,
@@ -95,11 +92,15 @@ func (driver *QiniuDriver) DirContents(prefix string) ([]server.FileInfo, error)
 					MimeType: entry.MimeType,
 					Customer: "",
 				},
-			})
+			}
+		}
+		err = callback(f)
+		if err != nil {
+			return err
 		}
 	}
 
-	return files, nil
+	return nil
 }
 
 func (driver *QiniuDriver) DeleteDir(key string) error {
