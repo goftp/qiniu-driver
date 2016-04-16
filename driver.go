@@ -22,6 +22,10 @@ type QiniuDriver struct {
 	bucket  string
 }
 
+func (driver *QiniuDriver) Init(conn *server.Conn) {
+	//driver.conn = conn
+}
+
 func (driver *QiniuDriver) ChangeDir(path string) error {
 	f, err := driver.Stat(path)
 	if err != nil {
